@@ -7,7 +7,7 @@ const API_BASE = `https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_BIN_ID}`;
 const EMPTY_STATE = { events: [], dressCode: { options: [] }, decorations: [], itemsNeeded: [], adminPassword: null, auditLog: [] };
 
 let state = structuredClone(EMPTY_STATE);
-let myName = "";
+let myName = localStorage.getItem("ballot_name") || "";
 let isAdmin = sessionStorage.getItem("ballot_admin") === "1";
 let pollTimer = null;
 let saving = false;
@@ -297,6 +297,7 @@ function ensureName(cb) {
 
     if (result.valid) {
       myName = result.name;
+      localStorage.setItem("ballot_name", myName);
       memeBox.style.display = "none";
       overlay.classList.add("hidden");
       updateWhoDisplay();
