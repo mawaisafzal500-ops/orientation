@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Ballot — Event Voting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#F4F1FF;
+    --bg2:#FCFAF4;
+    --card:#FFFFFF;
+    --ink:#211C35;
+    --ink-soft:#6A6480;
+    --line:#EAE5F7;
+    --line-soft:#F0EDFA;
+    --accent:#6C5CE7;
+    --accent-dark:#5340D6;
+    --accent-dim:#EFEBFF;
+    --gold:#D9A441;
+    --gold-dark:#B9822B;
+    --gold-dim:#FBF0D9;
+    --yes:#1FA971;
+    --yes-bg:#E3F7ED;
+    --no:#E4574C;
+    --no-bg:#FCE7E5;
+    --white:#FFFFFF;
+    --shadow-sm: 0 2px 10px rgba(33,28,53,.06);
+    --shadow-md: 0 10px 30px rgba(33,28,53,.09);
+    --shadow-lg: 0 18px 48px rgba(33,28,53,.16);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  body{
+    background:
+      radial-gradient(1100px 500px at 12% -10%, rgba(108,92,231,.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(217,164,65,.10), transparent 55%),
+      linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 420px, var(--bg2) 100%);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    padding-bottom:80px;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{ font-family:'Fraunces',serif; }
+  .wrap{ max-width:760px; margin:0 auto; padding:0 20px; }
+
+  /* ---- Top bar ---- */
+  header.top{
+    position:sticky; top:0; z-index:30;
+    background:rgba(252,250,244,.78);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+    padding:20px 0;
+  }
+  header.top .wrap{ display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;}
+  header.top h1{ font-size:26px; font-weight:600; margin:0; letter-spacing:-0.01em; }
+  header.top .tagline{ margin:2px 0 0; color:var(--ink-soft); font-size:13px;}
+  .top-actions{ display:flex; align-items:center; gap:8px; }
+  .who{ font-size:13px; color:var(--ink-soft); margin-right:2px; }
+  .who b{ color:var(--ink); }
+
+  /* ---- Buttons ---- */
+  button{ font-family:'Inter',sans-serif; cursor:pointer; }
+  .btn{
+    border:1px solid var(--line);
+    background:var(--white);
+    color:var(--ink);
+    padding:9px 16px;
+    font-size:13px;
+    font-weight:600;
+    border-radius:999px;
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+    box-shadow:var(--shadow-sm);
+  }
+  .btn:hover{ transform:translateY(-1px); box-shadow:var(--shadow-md); border-color:var(--accent); }
+  .btn:active{ transform:translateY(0); }
+  .btn.primary{ background:linear-gradient(135deg, var(--accent), var(--accent-dark)); color:var(--white); border-color:transparent; }
+  .btn.primary:hover{ box-shadow:0 12px 26px rgba(108,92,231,.35); }
+  .btn.small{ padding:6px 12px; font-size:12px; }
+  .btn.gold{ border-color:var(--gold-dim); color:var(--gold-dark); background:var(--gold-dim); }
+  .btn.gold:hover{ background:var(--gold); color:var(--white); border-color:var(--gold); }
+  .btn.danger{ border-color:var(--no-bg); color:var(--no); background:var(--no-bg); }
+  .btn.danger:hover{ background:var(--no); color:var(--white); border-color:var(--no); }
+  .btn.ghost{ border:none; color:var(--ink-soft); padding:5px 10px; background:transparent; box-shadow:none; }
+  .btn.ghost:hover{ background:var(--line-soft); color:var(--ink); box-shadow:none; transform:none; }
+
+  /* ---- Section navbar ---- */
+  nav.sections{
+    position:sticky; top:0; z-index:25;
+    background:rgba(252,250,244,.92);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+    padding:0;
+    transition:top 0.1s ease;
+  }
+  nav.sections .wrap{ display:flex; align-items:center; gap:0; overflow-x:auto; }
+  nav.sections a{
+    display:flex; align-items:center; gap:6px;
+    padding:12px 18px;
+    font-size:13px; font-weight:600;
+    color:var(--ink-soft);
+    text-decoration:none;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+    transition:color .15s, border-color .15s;
+  }
+  nav.sections a:hover{ color:var(--ink); }
+  nav.sections a.active{ color:var(--accent); border-bottom-color:var(--accent); }
+  nav.sections a .nav-icon{ font-size:15px; }
+  .nav-right{ margin-left:auto; display:flex; align-items:center; gap:8px; padding-right:4px; flex-shrink:0; }
+
+  /* ---- Sections ---- */
+  main{ padding-top:30px; scroll-behavior:smooth; }
+  .section-label{
+    display:flex; align-items:center; justify-content:space-between;
+    margin:46px 0 16px; gap:8px; flex-wrap:wrap;
+  }
+  .section-label h2{ font-size:21px; font-weight:600; margin:0; display:flex; align-items:center; gap:8px;}
+  .empty{
+    border:1.5px dashed var(--line);
+    border-radius:var(--radius-md);
+    padding:26px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:14px;
+    background:rgba(255,255,255,.5);
+  }
+
+  /* ---- Event card ---- */
+  .event{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-sm);
+    padding:22px 22px 14px;
+    margin-bottom:18px;
+  }
+  .event-head{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;
+  }
+  .event-num{
+    font-family:'Fraunces',serif;
+    font-size:12px;
+    color:var(--gold-dark);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin:0 0 4px;
+  }
+  .event-head h3{ font-size:22px; font-weight:600; margin:0; }
+  .event-meta{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
+  .event-actions{ display:flex; gap:8px; flex-shrink:0; }
+
+  /* ---- Activity row ---- */
+  .activity{
+    border-top:1px solid var(--line-soft);
+    padding:16px 0;
+    position:relative;
+  }
+  .activity-row{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;
+  }
+  .activity-name{ font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .top-badge{
+    display:inline-flex; align-items:center; gap:3px;
+    background:linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color:var(--white); font-size:10px; font-weight:800; letter-spacing:.03em;
+    padding:3px 8px; border-radius:999px; text-transform:uppercase;
+  }
+  .activity-meta{ font-size:12px; color:var(--ink-soft); margin-top:3px; }
+  .vote-group{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .vote-btn{
+    border:1.5px solid var(--line);
+    background:var(--white);
+    border-radius:999px;
+    padding:8px 15px;
+    font-size:13px;
+    font-weight:700;
+    display:flex; align-items:center; gap:6px;
+    color:var(--ink-soft);
+    box-shadow:var(--shadow-sm);
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .vote-btn .count{ font-family:'Fraunces',serif; }
+  .vote-btn.yes.active{ background:var(--yes-bg); border-color:var(--yes); color:var(--yes); }
+  .vote-btn.no.active{ background:var(--no-bg); border-color:var(--no); color:var(--no); }
+  .vote-btn:hover{ border-color:var(--ink); transform:translateY(-1px); }
+
+  /* ---- Suggestions ---- */
+  .suggestions{ margin-top:12px; padding-left:2px; }
+  .suggestions-toggle{
+    font-size:12px; color:var(--accent); background:var(--accent-dim); border:none;
+    padding:6px 12px; border-radius:999px; font-weight:600;
+  }
+  .suggestions-toggle:hover{ background:var(--accent); color:var(--white); }
+  .sugg-list{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .sugg-item{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    background:var(--line-soft);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    font-size:13px;
+  }
+  .sugg-text{ flex:1; font-weight:500; }
+  .sugg-meta{ font-size:11px; color:var(--ink-soft); display:block; font-weight:400; margin-top:2px; }
+  .sugg-vote-group{ display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .sugg-vote{
+    border:1.5px solid var(--line); background:var(--white); border-radius:999px;
+    padding:5px 10px; font-size:12px; font-weight:700; color:var(--ink-soft); white-space:nowrap;
+  }
+  .sugg-vote.up.active{ background:var(--yes-bg); border-color:var(--yes); color:var(--yes); }
+  .sugg-vote.down.active{ background:var(--no-bg); border-color:var(--no); color:var(--no); }
+  .sugg-score{ font-family:'Fraunces',serif; font-weight:600; font-size:13px; min-width:18px; text-align:center; color:var(--ink-soft); }
+  .add-inline{ display:flex; gap:8px; margin-top:10px; }
+  .add-inline input{ flex:1; }
+
+  /* ---- Dress code ---- */
+  .dress-list{ display:flex; flex-direction:column; gap:10px; }
+  .dress-item{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius-md);
+    box-shadow:var(--shadow-sm);
+    padding:14px 16px;
+    display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+
+  /* ---- Decorations ---- */
+  .decor-list{ display:flex; flex-direction:column; gap:10px; }
+
+  /* ---- Photo Booth Gallery ---- */
+  .photobooth-gallery{
+    display:flex; flex-wrap:wrap; gap:10px;
+    margin-top:12px; padding-top:12px;
+    border-top:1px dashed var(--line);
+  }
+  .photobooth-gallery-title{
+    width:100%; font-size:12px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--ink-soft); font-weight:600; margin-bottom:2px;
+  }
+  .pb-thumb{
+    width:90px; height:90px; object-fit:cover;
+    border-radius:var(--radius-sm); cursor:pointer;
+    border:2px solid var(--line);
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .pb-thumb:hover{
+    transform:scale(1.06); border-color:var(--accent);
+    box-shadow:0 4px 16px rgba(100,80,200,.25);
+  }
+
+  /* ---- Lightbox ---- */
+  .lightbox-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.88);
+    display:flex; align-items:center; justify-content:center;
+    z-index:200; padding:20px; cursor:zoom-out;
+  }
+  .lightbox-overlay img{
+    max-width:100%; max-height:90vh;
+    border-radius:var(--radius-md);
+    box-shadow:0 8px 48px rgba(0,0,0,.7);
+    cursor:default;
+  }
+  .lightbox-close{
+    position:absolute; top:18px; right:22px;
+    background:none; border:none; color:#fff;
+    font-size:28px; line-height:1; cursor:pointer; opacity:.8;
+  }
+  .lightbox-close:hover{ opacity:1; }
+
+  /* ---- Items Needed ---- */
+  .items-list{ display:flex; flex-direction:column; gap:6px; }
+  .items-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius-md);
+    box-shadow:var(--shadow-sm);
+    padding:14px 16px;
+  }
+  .items-category{
+    font-family:'Fraunces',serif;
+    font-size:15px;
+    font-weight:600;
+    color:var(--gold-dark);
+    margin-bottom:10px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .item-row{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 0;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .item-row:last-child{ border-bottom:none; }
+  .item-check{
+    width:20px; height:20px; border:2px solid var(--line); border-radius:6px;
+    cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .item-check.checked{ background:var(--yes); border-color:var(--yes); }
+  .item-check.checked::after{ content:"✓"; color:#fff; font-size:12px; font-weight:700; }
+  .item-text{ flex:1; font-size:14px; font-weight:500; }
+  .item-text.done{ text-decoration:line-through; color:var(--ink-soft); }
+  .item-qty{ font-size:12px; color:var(--ink-soft); white-space:nowrap; }
+  .item-del{
+    border:none; background:none; color:var(--no); font-size:14px;
+    padding:2px 6px; cursor:pointer; border-radius:999px; flex-shrink:0;
+  }
+  .item-del:hover{ background:var(--no-bg); }
+  .items-summary{
+    font-size:12px; color:var(--ink-soft); margin-top:10px;
+    padding-top:8px; border-top:1px solid var(--line-soft);
+  }
+
+  /* ---- Inputs ---- */
+  input[type=text]{
+    font-family:'Inter',sans-serif;
+    border:1.5px solid var(--line);
+    background:var(--white);
+    border-radius:var(--radius-sm);
+    padding:10px 13px;
+    font-size:14px;
+    color:var(--ink);
+    width:100%;
+  }
+  input[type=text]:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+  .prompt-fields{ display:flex; flex-direction:column; gap:10px; }
+
+  /* ---- Modal ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(33,28,53,0.55);
+    backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; padding:20px; z-index:50;
+  }
+  .modal{
+    background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    padding:28px; max-width:400px; width:100%;
+  }
+  .modal h3{ margin:0 0 6px; font-size:20px; font-weight:600; }
+  .modal p{ font-size:13px; color:var(--ink-soft); margin:0 0 16px; }
+  .modal .row{ display:flex; gap:8px; margin-top:18px; justify-content:flex-end; flex-wrap:wrap; }
+  .hidden{ display:none !important; }
+
+  /* ---- Admin dashboard ---- */
+  .modal.wide{ max-width:700px; max-height:82vh; display:flex; flex-direction:column; }
+  .modal-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:4px; flex-wrap:wrap; }
+  .modal-head h3{ margin:0; }
+  .modal-head-actions{ display:flex; gap:8px; }
+  .dash-scroll{ overflow-y:auto; margin-top:10px; padding-right:4px; }
+  .dash-summary{ display:flex; gap:12px; flex-wrap:wrap; margin:2px 0 18px; }
+  .dash-stat{ background:var(--accent-dim); border-radius:var(--radius-sm); padding:12px 16px; }
+  .dash-stat .num{ font-family:'Fraunces',serif; font-size:22px; display:block; color:var(--accent-dark); }
+  .dash-stat .lbl{ font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; }
+  .dash-section-title{ font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--gold-dark); margin:18px 0 8px; font-weight:700; }
+  .dash-section-title:first-child{ margin-top:0; }
+  .dash-event-title{ font-family:'Fraunces',serif; font-size:15px; margin:14px 0 6px; font-weight:600; }
+  .dash-event-title:first-child{ margin-top:0; }
+  .dash-activity{
+    border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:8px; background:var(--white);
+  }
+  .dash-activity-name{ font-weight:700; font-size:14px; }
+  .dash-votes{ display:flex; flex-direction:column; gap:2px; margin-top:6px; font-size:12px; }
+  .dash-yes{ color:var(--yes); }
+  .dash-no{ color:var(--no); }
+  .dash-suggestions{ margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); display:flex; flex-direction:column; gap:4px; }
+  .dash-sugg{ font-size:12px; color:var(--ink-soft); }
+  /* ---- Audit Log ---- */
+  .dash-audit-list{
+    display:flex; flex-direction:column; gap:8px; margin-bottom:18px;
+    max-height:260px; overflow-y:auto; padding-right:4px;
+  }
+  .dash-audit-card{
+    background:var(--white); border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:10px 12px; display:flex; flex-direction:column; gap:4px;
+    box-shadow:var(--shadow-sm);
+  }
+  .dash-audit-card.border-admin{ border-left:4px solid var(--no); }
+  .dash-audit-card.border-name{ border-left:4px solid #f59e0b; }
+  .dash-audit-header{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .audit-badge{
+    font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px;
+    text-transform:uppercase; letter-spacing:.04em;
+  }
+  .audit-badge-admin{ background:var(--no-bg); color:var(--no); border:1px solid #fca5a5; }
+  .audit-badge-name{ background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+  .audit-time{ font-size:11px; color:var(--ink-soft); }
+  .dash-audit-body{ font-size:13px; color:var(--ink); }
+  .audit-label{ color:var(--ink-soft); font-size:12px; }
+  .audit-name{ font-size:13px; font-weight:700; }
+  .audit-details{ font-size:12px; color:var(--ink-soft); }
+
+  footer{
+    max-width:760px; margin:60px auto 0; padding:20px; text-align:center;
+    font-size:12px; color:var(--ink-soft); border-top:1px solid var(--line);
+  }
+  .admin-tag{
+    display:inline-block; background:linear-gradient(135deg, var(--gold), var(--gold-dark)); color:var(--white);
+    font-size:10px; font-weight:800; letter-spacing:.03em; padding:3px 8px;
+    border-radius:999px; margin-left:6px; vertical-align:middle;
+  }
+  .status{ font-size:12px; color:var(--ink-soft); text-align:center; padding:6px 0; min-height:18px; }
+  .suggestion-btn{ background:var(--accent-dim) !important; border-color:var(--accent) !important; color:var(--accent-dark) !important; }
+  .suggestion-btn:hover{ background:var(--accent) !important; color:var(--white) !important; }
+
+  @media (max-width:600px){
+    .wrap{ padding:0 14px; }
+    header.top{ padding:14px 0; }
+    header.top .wrap{ gap:10px; }
+    header.top h1{ font-size:20px; }
+    header.top .tagline{ font-size:11px; }
+    .top-actions{ gap:6px; }
+    .top-actions .btn{ padding:6px 10px; font-size:11px; }
+    .who{ font-size:11px; margin-right:0; }
+    nav.sections .wrap{ gap:0; }
+    nav.sections a{ padding:10px 12px; font-size:12px; gap:4px; }
+    nav.sections a .nav-icon{ font-size:13px; }
+    .nav-right{ padding-right:0; }
+    .nav-right .btn{ padding:5px 10px; font-size:11px; }
+    main{ padding-top:20px; }
+    .section-label{ margin:30px 0 12px; }
+    .section-label h2{ font-size:17px; }
+    .section-label .btn{ padding:6px 10px; font-size:11px; }
+    .event{ padding:16px 14px 10px; border-radius:var(--radius-md); }
+    .event-head h3{ font-size:18px; }
+    .event-actions{ gap:6px; }
+    .event-actions .btn{ padding:5px 10px; font-size:11px; }
+    .activity-row{ gap:10px; }
+    .activity-name{ font-size:14px; gap:6px; }
+    .top-badge{ font-size:9px; padding:2px 6px; }
+    .activity-meta{ font-size:11px; }
+    .vote-btn{ padding:7px 12px; font-size:12px; }
+    .sugg-item{ padding:8px 10px; font-size:12px; }
+    .sugg-vote{ padding:4px 8px; font-size:11px; }
+    .dress-item{ padding:12px 14px; }
+    .dress-item .activity-name{ font-size:14px; }
+    .items-card{ padding:12px 14px; }
+    .items-category{ font-size:14px; }
+    .item-text{ font-size:13px; }
+    .modal{ padding:20px; margin:10px; }
+    .modal.wide{ max-width:100%; max-height:88vh; }
+    .modal h3{ font-size:18px; }
+    .modal p{ font-size:12px; }
+    .dash-summary{ gap:8px; }
+    .dash-stat{ padding:10px 12px; }
+    .dash-stat .num{ font-size:18px; }
+    .dash-stat .lbl{ font-size:10px; }
+    .dash-activity{ padding:10px 12px; }
+    .dash-activity-name{ font-size:13px; }
+    .btn{ padding:8px 14px; font-size:12px; }
+    .btn.small{ padding:5px 10px; font-size:11px; }
+    input[type=text]{ padding:9px 11px; font-size:13px; }
+    footer{ margin-top:40px; padding:16px; font-size:11px; }
+  }
+
+  @media (max-width:380px){
+    header.top h1{ font-size:18px; }
+    .section-label h2{ font-size:15px; }
+    .event-head h3{ font-size:16px; }
+    .activity-name{ font-size:13px; }
+    .vote-btn{ padding:6px 10px; font-size:11px; }
+    .dash-summary{ flex-direction:column; }
+    .dash-stat{ width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div>
+      <h1>The Ballot</h1>
+      <p class="tagline">Add activities, vote yes or no, pick a dress code, and plan decorations — together.</p>
+    </div>
+    <div class="top-actions">
+      <span class="who" id="whoDisplay"></span>
+      <button class="btn small gold hidden" id="dashboardBtn">Dashboard</button>
+      <button class="btn small" id="adminBtn">Admin</button>
+      <button class="btn small ghost" id="refreshBtn" title="Refresh">↻</button>
+    </div>
+  </div>
+</header>
+
+<nav class="sections" id="sectionNav">
+  <div class="wrap">
+    <a href="#activities" class="active"><span class="nav-icon">🎯</span> Activities</a>
+    <a href="#dresscode"><span class="nav-icon">👔</span> Dress Code</a>
+    <a href="#decorations"><span class="nav-icon">🎨</span> Decorations</a>
+    <a href="#items"><span class="nav-icon">📋</span> Items</a>
+    <div class="nav-right">
+      <button class="btn small" id="navAdminBtn">🔑 Admin</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <div class="section-label" id="activities">
+    <h2>Activities</h2>
+    <button class="btn primary small" id="addEventBtn">+ Add heading</button>
+  </div>
+  <div id="eventsContainer"></div>
+
+  <div class="section-label" id="dresscode">
+    <h2>Dress code</h2>
+    <button class="btn primary small" id="addDressBtn">+ Add dressing option</button>
+  </div>
+  <div id="dressContainer" class="dress-list"></div>
+
+  <div class="section-label" id="decorations">
+    <h2>Decorations</h2>
+    <button class="btn primary small" id="addDecorBtn">+ Add decoration category</button>
+  </div>
+  <div id="decorContainer" class="decor-list"></div>
+
+  <div class="section-label" id="items">
+    <h2>Items Needed</h2>
+    <button class="btn primary small" id="addItemBtn">+ Add item</button>
+  </div>
+  <div id="itemsContainer" class="items-list"></div>
+
+  <div class="status" id="statusLine"></div>
+</main>
+
+<!-- Name gate -->
+<div class="overlay hidden" id="nameOverlay">
+  <div class="modal">
+    <h3>Welcome to The Ballot</h3>
+    <p>Please enter your name to continue. Only names in the selected list are allowed.</p>
+    <input type="text" id="nameInput" placeholder="Type your name" autocomplete="off" />
+    <div id="nameMessage" style="font-size:13px; margin-top:8px; min-height:20px;"></div>
+    <div id="nameMemeBox" style="display:none; text-align:center; margin-top:10px;">
+      <img src="not_in_list.jpg" alt="Not in list" style="width:300px; max-width:100%; border-radius:12px; margin-bottom:6px;" />
+      <div style="font-size:13px; color:var(--no); font-weight:600;">Add your own name or your name is not in the selected list</div>
+    </div>
+    <div id="nameSuggestions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;"></div>
+    <div class="row">
+      <button class="btn primary" id="nameSaveBtn">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin login -->
+<div class="overlay hidden" id="adminOverlay">
+  <div class="modal">
+    <h3>Admin login</h3>
+    <p>Enter the admin password to see who added and voted for each item, and to delete entries.</p>
+    <input type="text" id="adminPassInput" placeholder="Password" />
+    <div id="adminWrongPassBox" style="display:none; text-align:center; margin-top:12px;">
+      <img src="wrong_pass.jpg" alt="Wrong password meme" style="width:260px; max-width:100%; border-radius:12px; margin-bottom:6px;" />
+      <div style="font-size:13px; color:var(--no); font-weight:700;">Wrong password! Try again 😼</div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="adminCancelBtn">Cancel</button>
+      <button class="btn primary" id="adminLoginBtn">Log in</button>
+    </div>
+  </div>
+</div>
+
+<!-- Not-admin meme overlay -->
+<div class="overlay hidden" id="notAdminOverlay" onclick="el('notAdminOverlay').classList.add('hidden')" style="cursor:pointer;">
+  <div class="modal" style="text-align:center; max-width:360px;" onclick="event.stopPropagation()">
+    <img src="not_admin.jpg" alt="Bade harami ho beta" style="width:100%; border-radius:12px; margin-bottom:12px;" />
+    <p style="font-weight:700; font-size:15px; color:var(--no); margin:0 0 16px;">You are not allowed to be admin 😤</p>
+    <button class="btn primary" onclick="el('notAdminOverlay').classList.add('hidden')">OK, sorry 😅</button>
+  </div>
+</div>
+
+<!-- Admin dashboard -->
+<div class="overlay hidden" id="dashboardOverlay">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h3>Admin dashboard</h3>
+      <div class="modal-head-actions">
+        <button class="btn small gold" id="changePassBtn">Change password</button>
+        <button class="btn ghost small" id="dashboardCloseBtn">Close ✕</button>
+      </div>
+    </div>
+    <p>Every vote, on every activity, suggestion, decoration, and dress option — in one place.</p>
+    <div class="dash-scroll" id="dashboardContent"></div>
+  </div>
+</div>
+
+<!-- Generic prompt modal -->
+<div class="overlay hidden" id="promptOverlay">
+  <div class="modal">
+    <h3 id="promptTitle">Add item</h3>
+    <p id="promptHint"></p>
+    <div id="promptFields" class="prompt-fields"></div>
+    <div class="row">
+      <button class="btn ghost" id="promptCancelBtn">Cancel</button>
+      <button class="btn primary" id="promptOkBtn">Add</button>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
